@@ -31,7 +31,6 @@ import numpy as np
 ########################################################################################################
 ### MMA FUNCTIONS                                                                                    ###
 ########################################################################################################
-#MMA的原理可参考博士论文：<连续体结构拓扑优化理论与应用研究>-左孔天
 # Function for the MMA sub problem
 def mmasub(m,n,iter,xval,xmin,xmax,xold1,xold2,f0val,df0dx,fval,dfdx,low,upp,a0,a,c,d,move):
     
@@ -44,120 +43,114 @@ def mmasub(m,n,iter,xval,xmin,xmax,xold1,xold2,f0val,df0dx,fval,dfdx,low,upp,a0,
                 z >= 0,   y_i >= 0,         i = 1,...,m
     INPUT:
 
-        m     = The number of general constraints.                               #一般约束的数量
-        n     = The number of variables x_j.                                     #变量的数量
-        iter  = Current iteration number ( =1 the first time mmasub is called).  #迭代次数
-        xval  = Column vector with the current values of the variables x_j.      #x_value 当前变量值的列向量
-        xmin  = Column vector with the lower bounds for the variables x_j.       #变量的下界列向量
-        xmax  = Column vector with the upper bounds for the variables x_j.       #变量的上界列向量
-        xold1 = xval, one iteration ago (provided that iter>1).                  #上一迭代的变量值（iter > 1 时提供）
-        xold2 = xval, two iterations ago (provided that iter>2).                 #前一迭代的变量值（iter > 2 时提供）
-        f0val = The value of the objective function f_0 at xval.                 #在 xval 时目标函数 f_0 的值
-        df0dx = Column vector with the derivatives of the objective function     #目标函数对变量的导数: 在 xval 时目标函数 f_0 对变量的导数的列向量
+        m     = The number of general constraints.                              
+        n     = The number of variables x_j.                                    
+        iter  = Current iteration number ( =1 the first time mmasub is called). 
+        xval  = Column vector with the current values of the variables x_j.     
+        xmin  = Column vector with the lower bounds for the variables x_j.       
+        xmax  = Column vector with the upper bounds for the variables x_j.      
+        xold1 = xval, one iteration ago (provided that iter>1).                 
+        xold2 = xval, two iterations ago (provided that iter>2).                 
+        f0val = The value of the objective function f_0 at xval.                
+        df0dx = Column vector with the derivatives of the objective function     
                 f_0 with respect to the variables x_j, calculated at xval.       
-        fval  = Column vector with the values of the constraint functions f_i, calculated at xval.       #在 xval 时约束函数 f_i 的值的列向量
+        fval  = Column vector with the values of the constraint functions f_i, calculated at xval.      
         dfdx  = (m x n)-matrix with the derivatives of the constraint functions
-                f_i with respect to the variables x_j, calculated at xval.       #所有约束函数对变量的导数
+                f_i with respect to the variables x_j, calculated at xval.      
                 dfdx(i,j) = the derivative of f_i with respect to x_j.
-        low   = Column vector with the lower asymptotes from the previous        #上一迭代的下渐近值列向量（iter > 1 时提供）
+        low   = Column vector with the lower asymptotes from the previous        
                 iteration (provided that iter>1).
-        upp   = Column vector with the upper asymptotes from the previous        #上一迭代的上渐近值列向量（iter > 1 时提供）
+        upp   = Column vector with the upper asymptotes from the previous        
                 iteration (provided that iter>1).
-        a0    = The constants a_0 in the term a_0*z.                             #常数向量和标量，用于目标函数和约束中
+        a0    = The constants a_0 in the term a_0*z.                            
         a     = Column vector with the constants a_i in the terms a_i*z.
         c     = Column vector with the constants c_i in the terms c_i*y_i.
         d     = Column vector with the constants d_i in the terms 0.5*d_i*(y_i)^2.
   
     OUTPUT:
 
-        xmma  = Column vector with the optimal values of the variables x_j       #当前 MMA 子问题的变量 x_j 的最优值列向量
+        xmma  = Column vector with the optimal values of the variables x_j       
                 in the current MMA subproblem.
-        ymma  = Column vector with the optimal values of the variables y_i       #当前 MMA 子问题的变量 y_i 的最优值列向量
+        ymma  = Column vector with the optimal values of the variables y_i       
                 in the current MMA subproblem.
-        zmma  = Scalar with the optimal value of the variable z                  #当前 MMA 子问题的变量 z 的最优值
+        zmma  = Scalar with the optimal value of the variable z                 
                 in the current MMA subproblem.
-        lam   = Lagrange multipliers for the m general MMA constraints.          #对 m 个一般 MMA 约束的拉格朗日乘子
-        xsi   = Lagrange multipliers for the n constraints alfa_j - x_j <= 0.    #对其他约束的拉格朗日乘子
+        lam   = Lagrange multipliers for the m general MMA constraints.         
+        xsi   = Lagrange multipliers for the n constraints alfa_j - x_j <= 0.    
         eta   = Lagrange multipliers for the n constraints x_j - beta_j <= 0.
         mu    = Lagrange multipliers for the m constraints -y_i <= 0.
         zet   = Lagrange multiplier for the single constraint -z <= 0.           
-        s     = Slack variables for the m general MMA constraints.               #一般 MMA 约束的松弛变量
-        low   = Column vector with the lower asymptotes, calculated and used     #当前 MMA 子问题计算和使用的下、上渐近值
+        s     = Slack variables for the m general MMA constraints.               
+        low   = Column vector with the lower asymptotes, calculated and used    
                 in the current MMA subproblem.
         upp   = Column vector with the upper asymptotes, calculated and used
                 in the current MMA subproblem.
     """
-    # 初始化小常数和参数
-    epsimin = 0.0000001    #用于数值稳定性
-    raa0 = 0.00001         #用于计算
-    albefa = 0.1           #用于渐近值计算的比例因子
-    asyinit = 0.5          #初始渐近值的比例
-    asyincr = 1.2          #增加渐近值时的比例因子
-    asydecr = 0.7          #减少渐近值时的比例因子
-    # 创建向量：
+    epsimin = 0.0000001   
+    raa0 = 0.00001        
+    albefa = 0.1           
+    asyinit = 0.5          
+    asyincr = 1.2          
+    asydecr = 0.7         
     eeen = np.ones((n, 1))
     eeem = np.ones((m, 1))
     zeron = np.zeros((n, 1))
-    # Calculation of the asymptotes low and upp 计算渐近值
-    # 如果是前两次迭代，使用初始比例计算 low 和 upp
+    # Calculation of the asymptotes low and upp 
     if iter <= 2:
         low = xval-asyinit*(xmax-xmin)
         upp = xval+asyinit*(xmax-xmin)
-        #动态调整渐近值：
-         #如果是第 3 次及以后的迭代，计算 zzz，表示当前值与前两次值的关系。
-         #根据 zzz 的正负，调整 factor 的值，用于后续的渐近值计算。
     else:
         zzz = (xval-xold1)*(xold1-xold2)
         factor = eeen.copy()
         factor[np.where(zzz>0)] = asyincr
         factor[np.where(zzz<0)] = asydecr
-        low = xval-factor*(xold1-low)    #更新渐近值 low 和 upp，根据当前值和前一次的渐近值。
+        low = xval-factor*(xold1-low)   
         upp = xval+factor*(upp-xold1)
-        lowmin = xval-10*(xmax-xmin)     #设置渐近值的上下限
+        lowmin = xval-10*(xmax-xmin)     
         lowmax = xval-0.01*(xmax-xmin)
         uppmin = xval+0.01*(xmax-xmin)
         uppmax = xval+10*(xmax-xmin)
-        low = np.maximum(low,lowmin)     #确保渐近值在设置的边界内
+        low = np.maximum(low,lowmin)     
         low = np.minimum(low,lowmax)
         upp = np.minimum(upp,uppmax)
         upp = np.maximum(upp,uppmin)
-    # Calculation of the bounds alfa and beta  计算边界 alfa：zzz1, zzz2: 根据当前值和移动限制计算中间值。alfa: 取最大值，确保不低于 xmin。
+    # Calculation of the bounds alfa and beta  
     zzz1 = low+albefa*(xval-low)
     zzz2 = xval-move*(xmax-xmin)
     zzz = np.maximum(zzz1,zzz2)
     alfa = np.maximum(zzz,xmin)
-    zzz1 = upp-albefa*(upp-xval)             #计算边界 beta
+    zzz1 = upp-albefa*(upp-xval)           
     zzz2 = xval+move*(xmax-xmin)
     zzz = np.minimum(zzz1,zzz2)
     beta = np.minimum(zzz,xmax)
-    # Calculations of p0, q0, P, Q and b  计算变量范围
-    xmami = xmax-xmin                   # 计算上下界差
-    xmamieps = 0.00001*eeen             # 为了避免除以零，设置一个小的正数
-    xmami = np.maximum(xmami,xmamieps)  # 取最大值，确保 xmami 不小于这个小值
-    xmamiinv = eeen/xmami               # 计算变量的倒数
-    ux1 = upp-xval                      # 当前值与上界的差
-    ux2 = ux1*ux1                       # 当前值与上界的平方
-    xl1 = xval-low                      # 当前值与下界的差
-    xl2 = xl1*xl1                       # 当前值与下界的平方
-    uxinv = eeen/ux1                    # ux1 和 xl1 的倒数
+    # Calculations of p0, q0, P, Q and b 
+    xmami = xmax-xmin                  
+    xmamieps = 0.00001*eeen            
+    xmami = np.maximum(xmami,xmamieps) 
+    xmamiinv = eeen/xmami              
+    ux1 = upp-xval                     
+    ux2 = ux1*ux1                     
+    xl1 = xval-low                   
+    xl2 = xl1*xl1                     
+    uxinv = eeen/ux1                  
     xlinv = eeen/xl1
-    p0 = zeron.copy()                  # p0 和 q0 初始化为零向量
+    p0 = zeron.copy()                 
     q0 = zeron.copy()
-    p0 = np.maximum(df0dx,0)           # 更新 p0 为目标函数导数的非负部分，q0 为目标函数导数的非正部分
+    p0 = np.maximum(df0dx,0)          
     q0 = np.maximum(-df0dx,0)
     pq0 = 0.001*(p0+q0)+raa0*xmamiinv
     p0 = p0+pq0
-    q0 = q0+pq0                        # 添加一个小量，以确保数值稳定性
-    p0 = p0*ux2                        # 根据差的平方调整 p0 和 q0
+    q0 = q0+pq0                       
+    p0 = p0*ux2                      
     q0 = q0*xl2
     P = np.zeros((m,n)) ## @@ make sparse with scipy?
     Q = np.zeros((m,n)) ## @@ make sparse with scipy?
-    P = np.maximum(dfdx,0)                   # P 为约束导数的非负部分，Q 为约束导数的非正部分
+    P = np.maximum(dfdx,0)                  
     Q = np.maximum(-dfdx,0)
-    PQ = 0.001*(P+Q)+raa0*np.dot(eeem,xmamiinv.T)  # 为 P 和 Q 添加一个小量，确保数值稳定性
+    PQ = 0.001*(P+Q)+raa0*np.dot(eeem,xmamiinv.T)  
     P = P+PQ
     Q = Q+PQ
-    P = (diags(ux2.flatten(),0).dot(P.T)).T        # 对 P 和 Q 进行稀疏处理，通过对角线矩阵进行操作
+    P = (diags(ux2.flatten(),0).dot(P.T)).T        
     Q = (diags(xl2.flatten(),0).dot(Q.T)).T 
     b = (np.dot(P,uxinv)+np.dot(Q,xlinv)-fval)
     # Solving the subproblem by a primal-dual Newton method
@@ -229,7 +222,6 @@ def gcmmasub(m,n,iter,epsimin,xval,xmin,xmax,low,upp,raa0,raa,f0val,df0dx,fval,d
     return xmma,ymma,zmma,lam,xsi,eta,mu,zet,s,f0app,fapp
     
 # Function for solving the subproblem (can be used for MMA and GCMMA)
-#对偶问题求解
 def subsolv(m,n,epsimin,low,upp,alfa,beta,p0,q0,P,Q,a0,a,b,c,d):
     
     """
@@ -593,4 +585,3 @@ def asymp(outeriter,n,xval,xold1,xold2,xmin,xmax,low,upp,raa0,raa,raa0eps,raaeps
         upp = np.minimum(upp,uppmax)
         upp=np.maximum(upp,uppmin)
     return low,upp,raa0,raa
-
