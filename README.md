@@ -7,8 +7,6 @@ Written by Zheng Xu and Yue Shen, 2025 (c) School of Electrical Engineering, Cho
 
 Please send comments and suggestions to or xuzheng@cqu.edu.cn or 202311131117T@stu.cqu.edu.cn
 
-=====================================================================
+If you want to know more about the methods involves in this code, you can refer to this paper. 
 
-***** Notes *****
-If you want to know more about the methods involved in this code, you can refer to this paper.
 =====================================================================
