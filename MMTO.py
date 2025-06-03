@@ -1,7 +1,7 @@
 ########################################################################################################
 ### MMTO-Python         															                 ### 
 ### This file is part of MMTO-Python.                                                                ###
-### This is the python version of the code written Zhengxu and Yue shen.                             ###
+### This is the python version of the code written Zheng Xu and Yue Shen.                            ###
 ### version 01-06-2025                                                                               ###
 ########################################################################################################
 
