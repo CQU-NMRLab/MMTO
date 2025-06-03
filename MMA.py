@@ -2,7 +2,7 @@
 ### MMA-Python         															                     ### 
 ### This file is part of MMA-Python.                                                                 ###
 ### The orginal work is written by Krister Svanberg in MATLAB.                                       ###
-### This is the python version of the code written Zheng Xu and Yue Shen.                             ###
+### This is the python version of the code written Zheng Xu and Yue Shen.                            ###
 ### version 01-06-2025                                                                               ###
 ########################################################################################################
 
