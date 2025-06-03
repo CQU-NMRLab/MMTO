@@ -1,3 +1,19 @@
+########################################################################################################
+### MMA-Python         															                     ### 
+###                                                                                                  ###
+### This file is part of MMA-Python.                                                                 ###
+### The orginal work is written by Krister Svanberg in MATLAB.                                       ###
+### This is the python version of the code written Zhengxu and Yue shen.                             ###
+### version 01-06-2025                                                                               ###
+########################################################################################################
+
+"""
+Orginal work written by Krister Svanberg in Matlab. This is the python version of the code written
+by Zhengxu and Yue shen. 
+
+This file gives the functions mmasub and subsolv. 
+"""
+
 # Loading modules
 from __future__ import division
 from scipy.sparse import diags # or use numpy: from numpy import diag as diags
