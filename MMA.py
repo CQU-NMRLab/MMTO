@@ -1,5 +1,5 @@
 ########################################################################################################
-### MMA-Python         															                     ###                                                                                              ###
+### MMA-Python         															                     ### 
 ### This file is part of MMA-Python.                                                                 ###
 ### The orginal work is written by Krister Svanberg in MATLAB.                                       ###
 ### This is the python version of the code written Zhengxu and Yue shen.                             ###
